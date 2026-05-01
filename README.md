@@ -73,6 +73,20 @@ QT_QPA_PLATFORM=offscreen pytest
 
 Install development dependencies first, then run:
 
+On macOS or Linux:
+
+```bash
+sh scripts/build.sh
+```
+
+On Windows:
+
+```powershell
+scripts\build.bat
+```
+
+These scripts wrap the PyInstaller command:
+
 ```bash
 pyinstaller packaging/codebarbuilder.spec --clean
 ```
