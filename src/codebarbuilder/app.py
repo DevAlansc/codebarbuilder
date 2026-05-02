@@ -4,10 +4,12 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, Qt
-from PySide6.QtGui import QAction, QImage, QKeySequence, QPixmap, QShortcut
+from PySide6.QtGui import QAction, QIcon, QImage, QKeySequence, QPixmap, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
+    QDialog,
+    QDialogButtonBox,
     QFileDialog,
     QHBoxLayout,
     QLabel,
@@ -15,12 +17,16 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
 
 from .formats import DEFAULT_FORMAT_KEY, FORMATS
 from .generator import render_png, render_svg
+from .metadata import APP_AUTHOR, APP_DESCRIPTION, APP_LICENSE, APP_NAME, APP_VERSION
+from .notices import load_third_party_notices
+from .resources import app_icon_path
 from .translations import DEFAULT_LANGUAGE, LANGUAGES, translate
 from .validation import validate_barcode_value
 
@@ -65,6 +71,9 @@ class MainWindow(QMainWindow):
         self.number_label = QLabel()
 
         self.language_actions: dict[str, QAction] = {}
+        self.about_dialog: QDialog | None = None
+        self.third_party_dialog: QDialog | None = None
+        self.app_icon = QIcon(str(app_icon_path()))
 
         self._build_ui()
         self._build_menu()
@@ -133,6 +142,14 @@ class MainWindow(QMainWindow):
             language_group.addAction(action)
             self.language_menu.addAction(action)
             self.language_actions[language_key] = action
+
+        self.help_menu = self.menuBar().addMenu("")
+        self.about_action = QAction("", self)
+        self.about_action.triggered.connect(self.show_about_dialog)
+        self.third_party_action = QAction("", self)
+        self.third_party_action.triggered.connect(self.show_third_party_dialog)
+        self.help_menu.addAction(self.about_action)
+        self.help_menu.addAction(self.third_party_action)
 
     def _build_shortcuts(self) -> None:
         self.copy_shortcut = QShortcut(QKeySequence.StandardKey.Copy, self)
@@ -223,7 +240,11 @@ class MainWindow(QMainWindow):
 
     def apply_language(self) -> None:
         self.setWindowTitle(self._t("app_title"))
+        self.setWindowIcon(self.app_icon)
         self.language_menu.setTitle(self._t("menu_language"))
+        self.help_menu.setTitle(self._t("menu_help"))
+        self.about_action.setText(self._t("about_menu_item"))
+        self.third_party_action.setText(self._t("third_party_menu_item"))
         self.format_label.setText(self._t("format_label"))
         self.number_label.setText(self._t("number_label"))
         self.number_input.setPlaceholderText(self._t("number_placeholder"))
@@ -238,6 +259,7 @@ class MainWindow(QMainWindow):
             self.status_label.setText(self._t("ready_message"))
         for language_key, action in self.language_actions.items():
             action.setChecked(language_key == self.language)
+        self._refresh_open_dialogs()
 
     def set_language(self, language: str) -> None:
         if language not in LANGUAGES:
@@ -312,6 +334,18 @@ class MainWindow(QMainWindow):
         path.write_bytes(self.current_svg)
         self.status_label.setText(self._t("saved_svg_message"))
 
+    def show_about_dialog(self) -> None:
+        self.about_dialog = self._create_about_dialog()
+        self.about_dialog.show()
+        self.about_dialog.raise_()
+        self.about_dialog.activateWindow()
+
+    def show_third_party_dialog(self) -> None:
+        self.third_party_dialog = self._create_third_party_dialog()
+        self.third_party_dialog.show()
+        self.third_party_dialog.raise_()
+        self.third_party_dialog.activateWindow()
+
     def clear_form(self) -> None:
         self.number_input.clear()
         self.status_label.setText(self._t("ready_message"))
@@ -382,6 +416,67 @@ class MainWindow(QMainWindow):
     def _focus_number_input(self) -> None:
         self.number_input.setFocus(Qt.FocusReason.ShortcutFocusReason)
         self.number_input.selectAll()
+
+    def _create_about_dialog(self) -> QDialog:
+        dialog = QDialog(self)
+        dialog.setWindowTitle(self._t("about_title"))
+        dialog.setWindowIcon(self.app_icon)
+        dialog.setModal(False)
+        layout = QVBoxLayout()
+        layout.setSpacing(10)
+
+        title = QLabel(APP_NAME)
+        title.setObjectName("aboutTitle")
+        layout.addWidget(title)
+        layout.addWidget(
+            QLabel(
+                f"{self._t('about_version_label')}: {APP_VERSION}\n"
+                f"{self._t('about_author_label')}: {APP_AUTHOR}\n"
+                f"{self._t('about_license_label')}: {APP_LICENSE}\n"
+                f"{self._t('about_description_label')}: {APP_DESCRIPTION}"
+            )
+        )
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        buttons.button(QDialogButtonBox.StandardButton.Close).setText(self._t("close_button"))
+        buttons.rejected.connect(dialog.close)
+        layout.addWidget(buttons)
+        dialog.setLayout(layout)
+        dialog.resize(420, 180)
+        return dialog
+
+    def _create_third_party_dialog(self) -> QDialog:
+        dialog = QDialog(self)
+        dialog.setWindowTitle(self._t("third_party_title"))
+        dialog.setModal(False)
+        layout = QVBoxLayout()
+
+        text = QTextEdit()
+        text.setReadOnly(True)
+        text.setPlainText(load_third_party_notices())
+        layout.addWidget(text)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        buttons.button(QDialogButtonBox.StandardButton.Close).setText(self._t("close_button"))
+        buttons.rejected.connect(dialog.close)
+        layout.addWidget(buttons)
+        dialog.setLayout(layout)
+        dialog.resize(720, 520)
+        return dialog
+
+    def _refresh_open_dialogs(self) -> None:
+        if self.about_dialog is not None and self.about_dialog.isVisible():
+            geometry = self.about_dialog.geometry()
+            self.about_dialog.close()
+            self.about_dialog = self._create_about_dialog()
+            self.about_dialog.setGeometry(geometry)
+            self.about_dialog.show()
+        if self.third_party_dialog is not None and self.third_party_dialog.isVisible():
+            geometry = self.third_party_dialog.geometry()
+            self.third_party_dialog.close()
+            self.third_party_dialog = self._create_third_party_dialog()
+            self.third_party_dialog.setGeometry(geometry)
+            self.third_party_dialog.show()
 
     def _t(self, key: str, **params: object) -> str:
         return translate(self.language, key, **params)

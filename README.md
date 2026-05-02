@@ -16,6 +16,8 @@ renders barcode numbers that you already own or manage.
 - Save the generated barcode as PNG or SVG.
 - Clear the current barcode while keeping the selected format.
 - Switch the interface between Spanish and English from the language menu.
+- View app metadata and third-party dependency notices from the Help menu.
+- Use a custom barcode-style application icon.
 - Package the app as a desktop binary with PyInstaller.
 
 ## Requirements
@@ -79,6 +81,12 @@ On macOS or Linux:
 sh scripts/build.sh
 ```
 
+To create a macOS `.app` and `.dmg` on macOS:
+
+```bash
+sh scripts/build_macos_dmg.sh
+```
+
 On Windows:
 
 ```powershell
@@ -92,6 +100,8 @@ pyinstaller packaging/codebarbuilder.spec --clean
 ```
 
 The generated application will be placed under `dist/CodebarBuilder`.
+The macOS DMG script also creates `dist/CodebarBuilder.app` and
+`dist/CodebarBuilder.dmg`.
 
 Expected outputs depend on the operating system:
 

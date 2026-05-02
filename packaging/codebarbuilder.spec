@@ -1,15 +1,26 @@
 # Build from the repository root with:
 # pyinstaller packaging/codebarbuilder.spec --clean
 
+import sys
 from pathlib import Path
 
+from PyInstaller.utils.hooks import collect_data_files
+
 ROOT = Path.cwd()
+MAC_ICON = ROOT / "build" / "icons" / "codebarbuilder.icns"
+datas = collect_data_files("barcode")
+datas.extend(
+    [
+        (str(ROOT / "THIRD_PARTY_NOTICES.md"), "."),
+        (str(ROOT / "assets" / "codebarbuilder.svg"), "assets"),
+    ]
+)
 
 a = Analysis(
     [str(ROOT / "packaging" / "pyinstaller_entry.py")],
     pathex=[str(ROOT / "src")],
     binaries=[],
-    datas=[],
+    datas=datas,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -45,3 +56,18 @@ coll = COLLECT(
     upx_exclude=[],
     name="CodebarBuilder",
 )
+
+if sys.platform == "darwin":
+    app = BUNDLE(
+        coll,
+        name="CodebarBuilder.app",
+        icon=str(MAC_ICON) if MAC_ICON.exists() else None,
+        bundle_identifier="com.devalansc.codebarbuilder",
+        info_plist={
+            "CFBundleName": "Codebar builder",
+            "CFBundleDisplayName": "Codebar builder",
+            "CFBundleShortVersionString": "0.1.0",
+            "CFBundleVersion": "0.1.0",
+            "NSHighResolutionCapable": True,
+        },
+    )

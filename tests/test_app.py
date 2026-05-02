@@ -3,8 +3,10 @@ import pytest
 pytest.importorskip("PySide6")
 
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QLabel, QTextEdit
 
 from codebarbuilder.formats import DEFAULT_FORMAT_KEY
+from codebarbuilder.metadata import APP_AUTHOR, APP_LICENSE, APP_NAME, APP_VERSION
 from codebarbuilder.translations import DEFAULT_LANGUAGE
 from codebarbuilder.app import MainWindow
 
@@ -25,6 +27,7 @@ def test_main_window_defaults(qtbot):
     assert window.format_combo.currentData() == DEFAULT_FORMAT_KEY
     assert window.language == DEFAULT_LANGUAGE
     assert window.windowTitle() == "Codebar builder"
+    assert not window.windowIcon().isNull()
 
 
 def test_clear_preserves_format_and_language(qtbot):
@@ -66,3 +69,44 @@ def test_copy_shortcut_from_number_input_copies_generated_png(qtbot):
     qtbot.keyClick(window.number_input, Qt.Key.Key_C, Qt.KeyboardModifier.ControlModifier)
 
     assert window.status_label.text() == window._t("copied_message")
+
+
+def test_help_menu_actions_exist_and_translate(qtbot):
+    window = make_window(qtbot)
+
+    assert window.help_menu.title() == "Ayuda"
+    assert window.about_action.text() == "Acerca de Codebar builder"
+    assert window.third_party_action.text() == "Avisos de terceros"
+
+    window.set_language("en")
+
+    assert window.help_menu.title() == "Help"
+    assert window.about_action.text() == "About Codebar builder"
+    assert window.third_party_action.text() == "Third-party notices"
+
+
+def test_about_action_opens_dialog_with_app_metadata(qtbot):
+    window = make_window(qtbot)
+
+    window.about_action.trigger()
+
+    assert window.about_dialog is not None
+    assert window.about_dialog.windowTitle() == "Acerca de Codebar builder"
+    labels = window.about_dialog.findChildren(QLabel)
+    text = "\n".join(label.text() for label in labels)
+    assert APP_NAME in text
+    assert APP_VERSION in text
+    assert APP_AUTHOR in text
+    assert APP_LICENSE in text
+
+
+def test_third_party_action_opens_dialog_with_notices(qtbot):
+    window = make_window(qtbot)
+
+    window.third_party_action.trigger()
+
+    assert window.third_party_dialog is not None
+    text_edits = window.third_party_dialog.findChildren(QTextEdit)
+    assert len(text_edits) == 1
+    assert "PySide6" in text_edits[0].toPlainText()
+    assert "python-barcode" in text_edits[0].toPlainText()

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Codebar builder icon</title>
+  <desc id="desc">A clean app icon with a stylized barcode.</desc>
+  <rect width="256" height="256" rx="48" fill="#f8fafc"/>
+  <rect x="28" y="40" width="200" height="176" rx="24" fill="#ffffff" stroke="#cbd5e1" stroke-width="8"/>
+  <rect x="52" y="66" width="14" height="112" rx="3" fill="#0f172a"/>
+  <rect x="76" y="66" width="8" height="112" rx="3" fill="#0f172a"/>
+  <rect x="94" y="66" width="20" height="112" rx="3" fill="#0f172a"/>
+  <rect x="126" y="66" width="10" height="112" rx="3" fill="#0f172a"/>
+  <rect x="148" y="66" width="26" height="112" rx="3" fill="#0f172a"/>
+  <rect x="186" y="66" width="8" height="112" rx="3" fill="#0f172a"/>
+  <rect x="204" y="66" width="12" height="112" rx="3" fill="#0f172a"/>
+  <rect x="52" y="188" width="164" height="10" rx="5" fill="#2563eb"/>
+</svg>
