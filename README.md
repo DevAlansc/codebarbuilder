@@ -12,6 +12,7 @@ renders barcode numbers that you already own or manage.
 - Generate EAN-13, UPC-A, and EAN-8 barcodes.
 - Validate numeric input, exact length, and check digit.
 - Preview the barcode before exporting it.
+- Adjust barcode width and height independently.
 - Copy the generated barcode as a PNG image to the system clipboard.
 - Save the generated barcode as PNG or SVG.
 - Clear the current barcode while keeping the selected format.

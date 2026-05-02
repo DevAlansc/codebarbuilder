@@ -45,12 +45,16 @@ def test_clear_preserves_format_and_language(qtbot):
     window = make_window(qtbot)
     window.format_combo.setCurrentIndex(window.format_combo.findData("upca"))
     window.set_language("en")
+    window.width_slider.setValue(150)
+    window.height_slider.setValue(75)
     window.number_input.setText("036000291452")
 
     window.clear_form()
 
     assert window.format_combo.currentData() == "upca"
     assert window.language == "en"
+    assert window.width_slider.value() == 150
+    assert window.height_slider.value() == 75
     assert window.number_input.text() == ""
 
 
@@ -70,6 +74,21 @@ def test_generate_refocuses_number_input(qtbot):
     window.generate_barcode()
 
     assert window.current_png is not None
+
+
+def test_geometry_sliders_update_labels_and_regenerate_current_barcode(qtbot):
+    window = make_window(qtbot)
+    window.number_input.setText("4006381333931")
+    window.generate_barcode()
+    original_png = window.current_png
+
+    window.width_slider.setValue(150)
+    window.height_slider.setValue(75)
+
+    assert window.width_value_label.text() == "150%"
+    assert window.height_value_label.text() == "75%"
+    assert window.current_png is not None
+    assert window.current_png != original_png
 
 
 def test_copy_shortcut_from_number_input_copies_generated_png(qtbot):

@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QSlider,
     QTextEdit,
     QVBoxLayout,
     QWidget,
@@ -68,6 +69,14 @@ class MainWindow(QMainWindow):
 
         self.generate_button = QPushButton()
         self.generate_button.clicked.connect(self.generate_barcode)
+        self.width_slider = self._create_geometry_slider()
+        self.width_slider.valueChanged.connect(self._handle_geometry_changed)
+        self.width_value_label = QLabel()
+        self.width_value_label.setObjectName("geometryValueLabel")
+        self.height_slider = self._create_geometry_slider()
+        self.height_slider.valueChanged.connect(self._handle_geometry_changed)
+        self.height_value_label = QLabel()
+        self.height_value_label.setObjectName("geometryValueLabel")
         self.copy_png_button = QPushButton()
         self.copy_png_button.clicked.connect(self.copy_png)
         self.save_png_button = QPushButton()
@@ -79,6 +88,8 @@ class MainWindow(QMainWindow):
 
         self.format_label = QLabel()
         self.number_label = QLabel()
+        self.width_label = QLabel()
+        self.height_label = QLabel()
 
         self.language_actions: dict[str, QAction] = {}
         self.about_dialog: QDialog | None = None
@@ -113,6 +124,18 @@ class MainWindow(QMainWindow):
         input_layout.addLayout(number_layout, stretch=3)
         input_layout.addWidget(self.generate_button, alignment=Qt.AlignmentFlag.AlignBottom)
 
+        width_layout = QHBoxLayout()
+        width_layout.setSpacing(10)
+        width_layout.addWidget(self.width_label)
+        width_layout.addWidget(self.width_slider, stretch=1)
+        width_layout.addWidget(self.width_value_label)
+
+        height_layout = QHBoxLayout()
+        height_layout.setSpacing(10)
+        height_layout.addWidget(self.height_label)
+        height_layout.addWidget(self.height_slider, stretch=1)
+        height_layout.addWidget(self.height_value_label)
+
         export_layout = QHBoxLayout()
         export_layout.setSpacing(10)
         export_layout.addWidget(self.copy_png_button)
@@ -125,6 +148,8 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(28, 24, 28, 24)
         main_layout.setSpacing(16)
         main_layout.addLayout(input_layout)
+        main_layout.addLayout(width_layout)
+        main_layout.addLayout(height_layout)
         main_layout.addWidget(self.status_label)
         main_layout.addWidget(self.preview_label, stretch=1)
         main_layout.addLayout(export_layout)
@@ -194,6 +219,23 @@ class MainWindow(QMainWindow):
             }
             QLineEdit:focus, QComboBox:focus {
                 border: 1px solid #2563eb;
+            }
+            QSlider::groove:horizontal {
+                height: 6px;
+                background: #d7dee8;
+                border-radius: 3px;
+            }
+            QSlider::sub-page:horizontal {
+                background: #2563eb;
+                border-radius: 3px;
+            }
+            QSlider::handle:horizontal {
+                width: 18px;
+                height: 18px;
+                margin: -6px 0;
+                background: #ffffff;
+                border: 2px solid #2563eb;
+                border-radius: 9px;
             }
             QPushButton {
                 min-height: 38px;
@@ -276,6 +318,10 @@ class MainWindow(QMainWindow):
                 min-height: 24px;
                 color: #475569;
             }
+            QLabel#geometryValueLabel {
+                min-width: 46px;
+                color: #475569;
+            }
             QLabel#previewLabel {
                 background: #ffffff;
                 border: 1px solid #d7dee8;
@@ -295,6 +341,9 @@ class MainWindow(QMainWindow):
         self.third_party_action.setText(self._t("third_party_menu_item"))
         self.format_label.setText(self._t("format_label"))
         self.number_label.setText(self._t("number_label"))
+        self.width_label.setText(self._t("width_label"))
+        self.height_label.setText(self._t("height_label"))
+        self._update_geometry_value_labels()
         self.number_input.setPlaceholderText(self._t("number_placeholder"))
         self.generate_button.setText(self._t("generate_button"))
         self.copy_png_button.setText(self._t("copy_png_button"))
@@ -341,8 +390,18 @@ class MainWindow(QMainWindow):
             return
 
         try:
-            png = render_png(value, format_key)
-            svg = render_svg(value, format_key)
+            png = render_png(
+                value,
+                format_key,
+                width_scale=self._selected_width_scale(),
+                height_scale=self._selected_height_scale(),
+            )
+            svg = render_svg(
+                value,
+                format_key,
+                width_scale=self._selected_width_scale(),
+                height_scale=self._selected_height_scale(),
+            )
         except Exception as exc:
             QMessageBox.critical(self, self._t("error_title"), self._t("render_error"))
             self.status_label.setText(f"{self._t('render_error')} {exc}")
@@ -404,6 +463,15 @@ class MainWindow(QMainWindow):
         self._set_export_enabled(False)
         self._focus_number_input()
 
+    def _handle_geometry_changed(self) -> None:
+        self._update_geometry_value_labels()
+        if self.current_png is not None:
+            self.generate_barcode()
+
+    def _update_geometry_value_labels(self) -> None:
+        self.width_value_label.setText(f"{self.width_slider.value()}%")
+        self.height_value_label.setText(f"{self.height_slider.value()}%")
+
     def _set_preview_png(self, png: bytes) -> None:
         image = QImage.fromData(png, "PNG")
         pixmap = QPixmap.fromImage(image)
@@ -429,6 +497,14 @@ class MainWindow(QMainWindow):
         self.copy_png_button.setEnabled(enabled)
         self.save_png_button.setEnabled(enabled)
         self.save_svg_button.setEnabled(enabled)
+
+    def _create_geometry_slider(self) -> QSlider:
+        slider = QSlider(Qt.Orientation.Horizontal)
+        slider.setRange(50, 200)
+        slider.setSingleStep(10)
+        slider.setPageStep(25)
+        slider.setValue(100)
+        return slider
 
     def _validate_without_rendering(self) -> None:
         if not self.number_input.text().strip():
@@ -460,6 +536,12 @@ class MainWindow(QMainWindow):
 
     def _selected_format_key(self) -> str:
         return self.format_combo.currentData()
+
+    def _selected_width_scale(self) -> float:
+        return self.width_slider.value() / 100
+
+    def _selected_height_scale(self) -> float:
+        return self.height_slider.value() / 100
 
     def _focus_number_input(self) -> None:
         self.number_input.setFocus(Qt.FocusReason.ShortcutFocusReason)
