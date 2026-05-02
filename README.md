@@ -93,19 +93,34 @@ On Windows:
 scripts\build.bat
 ```
 
+This creates a portable PyInstaller app under `dist\CodebarBuilder`; it is not
+an installer.
+
+To create a Windows installer `.exe`, install Inno Setup 6 on Windows and run:
+
+```powershell
+scripts\build_windows_installer.bat
+```
+
+The installer output is:
+
+```text
+dist\installer\CodebarBuilder-Setup-0.1.0.exe
+```
+
 These scripts wrap the PyInstaller command:
 
 ```bash
 pyinstaller packaging/codebarbuilder.spec --clean
 ```
 
-The generated application will be placed under `dist/CodebarBuilder`.
+The generated portable application will be placed under `dist/CodebarBuilder`.
 The macOS DMG script also creates `dist/CodebarBuilder.app` and
 `dist/CodebarBuilder.dmg`.
 
 Expected outputs depend on the operating system:
 
-- Windows: executable `.exe`.
+- Windows: portable app folder from PyInstaller, or installer `.exe` with Inno Setup.
 - macOS: app bundle or executable depending on the PyInstaller configuration.
 - Linux: executable.
 

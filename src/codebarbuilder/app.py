@@ -4,7 +4,16 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import QEvent, Qt
-from PySide6.QtGui import QAction, QIcon, QImage, QKeySequence, QPixmap, QShortcut
+from PySide6.QtGui import (
+    QAction,
+    QColor,
+    QIcon,
+    QImage,
+    QKeySequence,
+    QPalette,
+    QPixmap,
+    QShortcut,
+)
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -34,6 +43,7 @@ from .validation import validate_barcode_value
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
+        configure_application_appearance(QApplication.instance())
         self.language = DEFAULT_LANGUAGE
         self.current_png: bytes | None = None
         self.current_svg: bytes | None = None
@@ -223,6 +233,44 @@ class MainWindow(QMainWindow):
             }
             QPushButton#quietButton {
                 color: #475569;
+            }
+            QMenuBar {
+                background: #eef1f5;
+                color: #17202a;
+            }
+            QMenuBar::item {
+                background: transparent;
+                padding: 5px 10px;
+            }
+            QMenuBar::item:selected {
+                background: #dbe4f0;
+                border-radius: 5px;
+            }
+            QMenu {
+                background: #ffffff;
+                color: #17202a;
+                border: 1px solid #cbd5e1;
+                padding: 4px;
+            }
+            QMenu::item {
+                padding: 6px 22px;
+                border-radius: 4px;
+            }
+            QMenu::item:selected {
+                color: #ffffff;
+                background: #2563eb;
+            }
+            QDialog {
+                background: #eef1f5;
+            }
+            QTextEdit {
+                color: #17202a;
+                background: #ffffff;
+                border: 1px solid #cbd5e1;
+                border-radius: 7px;
+                padding: 8px;
+                selection-color: #ffffff;
+                selection-background-color: #2563eb;
             }
             QLabel#statusLabel {
                 min-height: 24px;
@@ -484,9 +532,38 @@ class MainWindow(QMainWindow):
 
 def main() -> int:
     app = QApplication(sys.argv)
+    configure_application_appearance(app)
     window = MainWindow()
     window.show()
     return app.exec()
+
+
+def configure_application_appearance(app: QApplication | None) -> None:
+    if app is None:
+        return
+
+    app.setStyle("Fusion")
+    palette = QPalette()
+    palette.setColor(QPalette.ColorRole.Window, QColor("#eef1f5"))
+    palette.setColor(QPalette.ColorRole.WindowText, QColor("#17202a"))
+    palette.setColor(QPalette.ColorRole.Base, QColor("#ffffff"))
+    palette.setColor(QPalette.ColorRole.AlternateBase, QColor("#f8fafc"))
+    palette.setColor(QPalette.ColorRole.ToolTipBase, QColor("#ffffff"))
+    palette.setColor(QPalette.ColorRole.ToolTipText, QColor("#17202a"))
+    palette.setColor(QPalette.ColorRole.Text, QColor("#17202a"))
+    palette.setColor(QPalette.ColorRole.Button, QColor("#ffffff"))
+    palette.setColor(QPalette.ColorRole.ButtonText, QColor("#17202a"))
+    palette.setColor(QPalette.ColorRole.BrightText, QColor("#ffffff"))
+    palette.setColor(QPalette.ColorRole.Highlight, QColor("#2563eb"))
+    palette.setColor(QPalette.ColorRole.HighlightedText, QColor("#ffffff"))
+    palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text, QColor("#9aa6b2"))
+    palette.setColor(
+        QPalette.ColorGroup.Disabled,
+        QPalette.ColorRole.ButtonText,
+        QColor("#9aa6b2"),
+    )
+    palette.setColor(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Button, QColor("#e5e9ef"))
+    app.setPalette(palette)
 
 
 if __name__ == "__main__":

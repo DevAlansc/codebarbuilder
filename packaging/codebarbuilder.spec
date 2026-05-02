@@ -8,6 +8,7 @@ from PyInstaller.utils.hooks import collect_data_files
 
 ROOT = Path.cwd()
 MAC_ICON = ROOT / "build" / "icons" / "codebarbuilder.icns"
+WIN_ICON = ROOT / "build" / "icons" / "codebarbuilder.ico"
 datas = collect_data_files("barcode")
 datas.extend(
     [
@@ -46,6 +47,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=str(WIN_ICON) if sys.platform == "win32" and WIN_ICON.exists() else None,
 )
 coll = COLLECT(
     exe,

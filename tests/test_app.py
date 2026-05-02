@@ -3,7 +3,8 @@ import pytest
 pytest.importorskip("PySide6")
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QLabel, QTextEdit
+from PySide6.QtGui import QPalette
+from PySide6.QtWidgets import QApplication, QLabel, QTextEdit
 
 from codebarbuilder.formats import DEFAULT_FORMAT_KEY
 from codebarbuilder.metadata import APP_AUTHOR, APP_LICENSE, APP_NAME, APP_VERSION
@@ -28,6 +29,16 @@ def test_main_window_defaults(qtbot):
     assert window.language == DEFAULT_LANGUAGE
     assert window.windowTitle() == "Codebar builder"
     assert not window.windowIcon().isNull()
+
+
+def test_application_uses_light_palette(qtbot):
+    make_window(qtbot)
+    app = QApplication.instance()
+    palette = app.palette()
+
+    assert app.style().objectName().lower() == "fusion"
+    assert palette.color(QPalette.ColorRole.Base).lightness() > 240
+    assert palette.color(QPalette.ColorRole.Text).lightness() < 80
 
 
 def test_clear_preserves_format_and_language(qtbot):
